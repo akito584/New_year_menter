@@ -11,7 +11,7 @@ app = FastAPI(title="Resolution Mate API")
 # CORS設定 (フロントエンドからのアクセスを許可)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"], # 【重要】本番URLが決まるまでは "*" (すべて許可) にしておくのが一番ハマらない
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

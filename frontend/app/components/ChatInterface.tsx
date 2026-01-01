@@ -31,8 +31,10 @@ export default function ChatInterface() {
 
         try {
             // APIリクエスト
-            // 注意: バックエンドのURLは環境変数に入れるべきですが、一旦直書き
-            const res = await axios.post("http://127.0.0.1:8000/api/chat/", {
+            // 環境変数がなければlocalhostを使う（開発用）
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+            const res = await axios.post(`${API_BASE_URL}/api/chat/`, {
                 message: userMessage.content,
                 history: messages, // 過去ログも送る
                 strength_level: strengthLevel,
