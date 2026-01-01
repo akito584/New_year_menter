@@ -1,18 +1,22 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from app.core.config import settings
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# PostgreSQL接続エンジン
-engine = create_engine(settings.DATABASE_URL)
+# 【修正ポイント】環境変数 DATABASE_URL を読み込む
+# 第2引数の "postgresql://..." はローカル開発用のフォールバックです
+# プロジェクトの既存設定に合わせてDB名を resolution_mate にしています
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/resolution_mate")
 
-# セッションローカルクラス
+# Neon/Renderを使う場合、URLの先頭が "postgres://" だとSQLAlchemyが嫌がることがあるため修正
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# エンジン作成
+engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# ベースモデルクラス
 Base = declarative_base()
 
-# 依存性注入用関数
 def get_db():
     db = SessionLocal()
     try:
