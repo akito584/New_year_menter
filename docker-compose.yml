@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # データベース (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: resolution_mate_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: resolution_mate
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # バックエンド (FastAPI)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resolution_mate_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app # ホットリロード用にホストのコードをマウント
+      - ./.env:/app/.env
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/resolution_mate
+      # 明示的に環境変数を渡す (もし.envファイルの読み込みがうまくいかない場合の保険)
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    # コンテナ内からGemini API等へアクセスするため、.envは必要
+
+    # フロントエンド (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resolution_mate_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app # ホットリロード用にホストのコードをマウント
+      - /app/node_modules # コンテナ内のnode_modulesを守るためにボリューム化
+    depends_on:
+      - backend
+    environment:
+      # ブラウザから見たバックエンドのURL (Client Side Fetching用)
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+
+volumes:
+  postgres_data:
